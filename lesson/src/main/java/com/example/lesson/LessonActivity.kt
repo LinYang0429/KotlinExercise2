@@ -15,11 +15,10 @@ import android.widget.LinearLayout
 import android.widget.Toolbar
 import com.example.lesson.entity.Lesson
 
-class LessonActivity : AppCompatActivity(), BaseView<LessonPresenter?>,
+class LessonActivity : AppCompatActivity(), BaseView<LessonPresenter>,
     Toolbar.OnMenuItemClickListener {
-    private val lessonPresenter = LessonPresenter(this)
-    override fun getPresenter(): LessonPresenter {
-        return lessonPresenter
+    override val p: LessonPresenter by lazy {
+        LessonPresenter(this)
     }
 
     private val lessonAdapter = LessonAdapter()
@@ -30,14 +29,19 @@ class LessonActivity : AppCompatActivity(), BaseView<LessonPresenter?>,
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         toolbar.inflateMenu(R.menu.menu_lesson)
         toolbar.setOnMenuItemClickListener(this)
-        val recyclerView = findViewById<RecyclerView>(R.id.list)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = lessonAdapter
-        recyclerView.addItemDecoration(DividerItemDecoration(this, LinearLayout.VERTICAL))
-        refreshLayout = findViewById(R.id.swipe_refresh_layout)
-        refreshLayout.setOnRefreshListener { getPresenter().fetchData() }
-        refreshLayout.setRefreshing(true)
-        getPresenter().fetchData()
+        findViewById<RecyclerView>(R.id.list).run {
+            layoutManager = LinearLayoutManager(this@LessonActivity)
+            adapter = lessonAdapter
+            addItemDecoration(DividerItemDecoration(this@LessonActivity, LinearLayout.VERTICAL))
+        }
+
+        findViewById<SwipeRefreshLayout>(R.id.swipe_refresh_layout).run {
+            refreshLayout = this
+            setOnRefreshListener { p.fetchData() }
+            setRefreshing(true)
+        }
+
+        p.fetchData()
     }
 
     internal fun showResult(lessons: List<Lesson>) {
@@ -46,7 +50,7 @@ class LessonActivity : AppCompatActivity(), BaseView<LessonPresenter?>,
     }
 
     override fun onMenuItemClick(item: MenuItem): Boolean {
-        getPresenter().showPlayback()
+        p.showPlayback()
         return false
     }
 }
